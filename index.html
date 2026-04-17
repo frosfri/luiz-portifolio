@@ -1,36 +1,780 @@
-// components/Cursor.jsx
-// Cursor personalizado que segue o mouse
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luiz Henrique — Portfólio</title>
 
-import { useEffect, useRef } from 'react'
+  <!-- ================================
+       FONTES
+       Troque em: https://fonts.google.com
+  ================================ -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
 
-export default function Cursor() {
-  const curRef = useRef(null)
-
-  useEffect(() => {
-    const el = curRef.current
-    if (!el) return
-
-    // Atualiza posição do cursor
-    const onMove = e => {
-      el.style.left = (e.clientX - 7) + 'px'
-      el.style.top  = (e.clientY - 7) + 'px'
+  <style>
+    /* ============================================================
+       CORES — Mude aqui para trocar o tema todo!
+    ============================================================ */
+    :root {
+      --bg:       #07090f;
+      --surface:  #0e1118;
+      --border:   #1e2333;
+      --accent:   #4fffb0;
+      --accent2:  #6c63ff;
+      --text:     #dde3f0;
+      --muted:    #5a6480;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Syne', sans-serif;
     }
 
-    // Efeito de clique
-    const onDown = () => el.classList.add('clicked')
-    const onUp   = () => el.classList.remove('clicked')
-
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('mouseup',   onUp)
-
-    // Limpeza: remove os eventos quando o componente sair da tela
-    return () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('mouseup',   onUp)
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      overflow-x: hidden;
     }
-  }, [])
 
-  return <div className="cursor" ref={curRef} />
-}
+
+
+    /* ============================================================
+       NAV
+    ============================================================ -->/*
+    
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.1rem 5vw;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      background: rgba(7,9,15,0.75);
+    }
+    .nav-logo {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 0.9rem;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 0 5vw;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, #1e2333 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.6;
+    }
+    #hero::after {
+      content: '';
+      position: absolute; top: 15%; left: -5%;
+      width: 55vw; height: 55vw; max-width: 700px; max-height: 700px;
+      background: radial-gradient(circle, rgba(79,255,176,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 4rem; width: 100%;
+    }
+    .hero-tag {
+      font-family: var(--mono);
+      color: var(--accent); font-size: 0.9rem;
+      margin-bottom: 1.2rem;
+      opacity: 0; animation: fadeUp 0.6s 0.2s forwards;
+    }
+    .hero-name {
+      font-size: clamp(3.2rem, 7vw, 6.5rem);
+      font-weight: 800; line-height: 1.05;
+      margin-bottom: 0.3rem;
+      opacity: 0; animation: fadeUp 0.6s 0.35s forwards;
+    }
+    .hero-name .accent { color: var(--accent); }
+    .hero-role {
+      font-family: var(--mono);
+      color: var(--accent2); font-size: 1rem;
+      margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.6s 0.5s forwards;
+    }
+    .hero-bio {
+      color: var(--muted); font-size: 1rem;
+      max-width: 480px; line-height: 1.8;
+      margin-bottom: 2.5rem;
+      opacity: 0; animation: fadeUp 0.6s 0.65s forwards;
+    }
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s 0.8s forwards;
+    }
+    .btn {
+      padding: 0.75rem 1.8rem; border-radius: 4px;
+      font-family: var(--mono); font-size: 0.82rem;
+      cursor: pointer; text-decoration: none;
+      transition: all 0.2s; display: inline-block; font-weight: 700;
+    }
+    .btn-primary { background: var(--accent); color: #000; border: 2px solid var(--accent); }
+    .btn-primary:hover { background: transparent; color: var(--accent); }
+    .btn-ghost { background: transparent; color: var(--text); border: 2px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .hero-photo-wrap {
+      position: relative;
+      opacity: 0; animation: fadeUp 0.7s 0.5s forwards;
+      flex-shrink: 0;
+    }
+    .hero-photo {
+      width: 240px; height: 240px;
+      border-radius: 12px;
+      object-fit: cover;
+      display: block;
+      border: 2px solid var(--accent);
+      filter: grayscale(15%);
+      transition: filter 0.3s;
+    }
+    .hero-photo:hover { filter: grayscale(0); }
+    .hero-photo-wrap::after {
+      content: '';
+      position: absolute; inset: 14px -14px -14px 14px;
+      border: 2px solid var(--accent2);
+      border-radius: 12px; z-index: -1;
+    }
+
+    /* ============================================================
+       STATS BAR
+    ============================================================ */
+    .stats-bar {
+      display: flex; flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .stat-item {
+      flex: 1; min-width: 150px;
+      padding: 1.5rem 2rem;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--mono);
+      font-size: 2rem; font-weight: 700;
+      color: var(--accent); display: block;
+    }
+    .stat-label {
+      font-size: 0.72rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.2rem;
+    }
+
+    /* ============================================================
+       SECOES
+    ============================================================ */
+    section { padding: 6rem 5vw; }
+    .sec-header {
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+    .sec-num {
+      font-family: var(--mono); font-size: 0.75rem;
+      color: var(--accent); border: 1px solid var(--accent);
+      padding: 0.2rem 0.6rem; border-radius: 2px; white-space: nowrap;
+    }
+    .sec-title { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; }
+    .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ============================================================
+       SOBRE
+    ============================================================ */
+    #about { background: var(--surface); }
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5rem; align-items: start;
+    }
+    .about-text p {
+      color: var(--muted); margin-bottom: 1.3rem;
+      font-size: 0.98rem; line-height: 1.85;
+    }
+    .about-text p strong { color: var(--text); }
+    .about-info { margin-top: 2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+    .about-info-row {
+      display: flex; align-items: center; gap: 0.8rem;
+      font-family: var(--mono); font-size: 0.82rem; color: var(--muted);
+    }
+    .about-info-row span:first-child { color: var(--accent); min-width: 20px; }
+    .about-info-row a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .about-info-row a:hover { color: var(--accent); }
+
+    .timeline { margin-top: 2rem; }
+    .tl-item {
+      display: flex; gap: 1.2rem;
+      padding-bottom: 1.8rem;
+      position: relative;
+    }
+    .tl-item::before {
+      content: '';
+      position: absolute; left: 7px; top: 18px;
+      width: 1px; bottom: 0;
+      background: var(--border);
+    }
+    .tl-dot {
+      width: 15px; height: 15px; flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: var(--bg); margin-top: 4px;
+      position: relative; z-index: 1;
+    }
+    .tl-year {
+      font-family: var(--mono); font-size: 0.75rem;
+      color: var(--accent); margin-bottom: 0.2rem;
+    }
+    .tl-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.15rem; }
+    .tl-sub { font-size: 0.82rem; color: var(--muted); }
+
+    /* ============================================================
+       SKILLS
+    ============================================================ */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 1rem;
+    }
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      transition: all 0.25s; cursor: default;
+    }
+    .skill-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      background: rgba(79,255,176,0.04);
+    }
+    .skill-icon { font-size: 2rem; margin-bottom: 0.6rem; display: block; }
+    .skill-name {
+      font-family: var(--mono); font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .skill-card:hover .skill-name { color: var(--accent); }
+
+    /* ============================================================
+       PROJETOS
+    ============================================================ */
+    #projects { background: var(--surface); }
+    .repos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .repo-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem;
+      text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; gap: 0.9rem;
+      transition: all 0.25s; position: relative; overflow: hidden;
+    }
+    .repo-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.3s;
+    }
+    .repo-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .repo-card:hover::before { transform: scaleX(1); }
+    .repo-header { display: flex; align-items: center; gap: 0.8rem; }
+    .repo-name {
+      font-family: var(--mono); font-size: 0.95rem;
+      color: var(--accent); font-weight: 700;
+    }
+    .repo-desc { font-size: 0.85rem; color: var(--muted); flex: 1; line-height: 1.65; }
+    .repo-footer {
+      display: flex; align-items: center; gap: 1rem;
+      font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+    }
+    .repo-lang { display: flex; align-items: center; gap: 0.4rem; }
+    .lang-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .repo-stars::before { content: 'estrelas: '; }
+    .repo-arrow {
+      margin-left: auto; color: var(--muted);
+      font-size: 1rem; transition: transform 0.2s, color 0.2s;
+    }
+    .repo-card:hover .repo-arrow { transform: translate(3px,-3px); color: var(--accent); }
+
+    .loading { display: flex; align-items: center; gap: 0.7rem; font-family: var(--mono); color: var(--muted); font-size: 0.88rem; }
+    .ld { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite; }
+    .ld:nth-child(2) { animation-delay: 0.2s; }
+    .ld:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ============================================================
+       CONTATO
+    ============================================================ */
+    #contact { text-align: center; }
+    .contact-title {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: var(--muted); font-weight: 400; margin-bottom: 1rem;
+    }
+    .contact-email {
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      font-weight: 800; color: var(--accent);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.2s;
+      word-break: break-all;
+    }
+    .contact-email:hover { border-color: var(--accent); }
+    .social-links { display: flex; justify-content: center; gap: 1rem; margin-top: 3rem; flex-wrap: wrap; }
+    .social-link {
+      font-family: var(--mono); font-size: 0.82rem;
+      color: var(--muted); text-decoration: none;
+      padding: 0.6rem 1.4rem;
+      border: 1px solid var(--border); border-radius: 4px;
+      transition: all 0.2s; display: flex; align-items: center; gap: 0.6rem;
+    }
+    .social-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(79,255,176,0.05); }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      text-align: center; padding: 2rem 5vw;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+    }
+    footer span { color: var(--accent); }
+
+    /* ============================================================
+       ANIMACOES
+    ============================================================ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.3; transform: scale(0.75); }
+    }
+
+    /* ============================================================
+       RESPONSIVO
+    ============================================================ */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-photo-wrap { display: none; }
+      .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    }
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.5rem; }
+      .stats-bar { flex-direction: column; }
+      .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"></div>
+
+  <!-- ============================================================
+       NAVEGACAO
+  ============================================================ -->
+  <nav>
+    <!-- ✏️ Mude o texto do logo -->
+    <a class="nav-logo" href="#hero">// luiz.dev</a>
+    <ul class="nav-links">
+      <li><a href="#about">Sobre</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projetos</a></li>
+      <li><a href="#contact">Contato</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+  ============================================================ -->
+  <section id="hero">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <p class="hero-tag">// olá, mundo 👋</p>
+
+        <!-- ✏️ Mude seu nome aqui -->
+        <h1 class="hero-name">Luiz<br/><span class="accent">Henrique</span></h1>
+
+        <!-- ✏️ Mude seu cargo/papel aqui -->
+        <p class="hero-role">Full Stack Developer &amp; ADS Student</p>
+
+        <!-- ✏️ Mude a sua bio aqui -->
+        <p class="hero-bio">
+          Estudante de Análise e Desenvolvimento de Sistemas no Senac Paulista.
+          Apaixonado por código limpo, interfaces bonitas e soluções que fazem a diferença.
+        </p>
+
+        <div class="hero-btns">
+          <a class="btn btn-primary" href="#projects">Ver Projetos</a>
+          <a class="btn btn-ghost" href="https://github.com/frosfri" target="_blank">GitHub →</a>
+        </div>
+      </div>
+
+      <!-- Foto de perfil (vem direto do GitHub) -->
+      <div class="hero-photo-wrap">
+        <img class="hero-photo"
+             src="https://avatars.githubusercontent.com/u/169819933?v=4"
+             alt="Luiz Henrique" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       STATS
+  ============================================================ -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num" id="stat-repos">18</span>
+      <div class="stat-label">Repositórios</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-followers">9</span>
+      <div class="stat-label">Seguidores</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-stars">--</span>
+      <div class="stat-label">Estrelas</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">5+</span>
+      <div class="stat-label">Linguagens</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SOBRE MIM
+  ============================================================ -->
+  <section id="about">
+    <div class="sec-header">
+      <span class="sec-num">01</span>
+      <h2 class="sec-title">Sobre Mim</h2>
+      <div class="sec-line"></div>
+    </div>
+
+    <div class="about-grid">
+
+      <!-- ✏️ Edite esses paragrafos com sua historia! -->
+      <div class="about-text">
+        <p>
+          Oi! Sou o <strong>Luiz Henrique</strong>, estudante do 3º ano do ensino médio e do curso de
+          <strong>Análise e Desenvolvimento de Sistemas</strong> no Senac Paulista.
+        </p>
+        <p>
+          Me defino como um desenvolvedor <strong>Full Stack</strong> em formação — gosto tanto de
+          criar interfaces bonitas no front-end quanto de estruturar a lógica no back-end.
+          Atualmente mergulhado em <strong>Java, JavaScript, React e PHP</strong>.
+        </p>
+        <p>
+          Sempre buscando novos projetos, desafios e aprendizados.
+          Aberto a oportunidades de estágio e colaborações open source!
+        </p>
+
+        <!-- Informacoes rapidas de contato -->
+        <div class="about-info">
+          <div class="about-info-row">
+            <span>📍</span>
+            <span>Senac Paulista — São Paulo, Brasil</span>
+          </div>
+          <div class="about-info-row">
+            <span>📧</span>
+            <!-- ✏️ Mude para seu e-mail -->
+            <a href="mailto:luizhenriquedosantos1505@gmail.com">luizhenriquedosantos1505@gmail.com</a>
+          </div>
+          <div class="about-info-row">
+            <span>🐙</span>
+            <a href="https://github.com/frosfri" target="_blank">github.com/frosfri</a>
+          </div>
+          <div class="about-info-row">
+            <span>📸</span>
+            <!-- ✏️ Mude para seu Instagram -->
+            <a href="https://www.instagram.com/stt_luizz/" target="_blank">@stt_luizz</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline de estudos -->
+      <!-- ✏️ Adicione novos marcos conforme for evoluindo! -->
+      <div>
+        <h3 style="font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; font-family:var(--mono);">
+          // trajetória
+        </h3>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div>
+              <div class="tl-year">2024 — atual</div>
+              <div class="tl-title">Análise e Desenvolvimento de Sistemas</div>
+              <div class="tl-sub">Senac Paulista</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div>
+              <div class="tl-year">2024</div>
+              <div class="tl-title">Primeiros projetos no GitHub</div>
+              <div class="tl-sub">HTML, CSS, JavaScript, Java, PHP</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div>
+              <div class="tl-year">Em andamento</div>
+              <div class="tl-title">Buscando experiência Full Stack</div>
+              <div class="tl-sub">Aberto a estágios e projetos colaborativos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SKILLS
+       ✏️ Adicione ou remova cards aqui quando aprender algo novo!
+  ============================================================ -->
+  <section id="skills">
+    <div class="sec-header">
+      <span class="sec-num">02</span>
+      <h2 class="sec-title">Skills &amp; Linguagens</h2>
+      <div class="sec-line"></div>
+    </div>
+
+    <div class="skills-grid">
+      <!-- Estrutura: emoji + nome -->
+      <div class="skill-card"><span class="skill-icon">🌐</span><div class="skill-name">HTML5</div></div>
+      <div class="skill-card"><span class="skill-icon">🎨</span><div class="skill-name">CSS3</div></div>
+      <div class="skill-card"><span class="skill-icon">⚡</span><div class="skill-name">JavaScript</div></div>
+      <div class="skill-card"><span class="skill-icon">⚛️</span><div class="skill-name">React</div></div>
+      <div class="skill-card"><span class="skill-icon">☕</span><div class="skill-name">Java</div></div>
+      <div class="skill-card"><span class="skill-icon">🐘</span><div class="skill-name">PHP</div></div>
+      <div class="skill-card"><span class="skill-icon">🐙</span><div class="skill-name">Git & GitHub</div></div>
+      <div class="skill-card"><span class="skill-icon">🗄️</span><div class="skill-name">SQL / BD</div></div>
+      <!-- ✏️ Exemplo para adicionar mais:
+      <div class="skill-card"><span class="skill-icon">🐍</span><div class="skill-name">Python</div></div>
+      -->
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROJETOS — Carregados automaticamente via API do GitHub!
+  ============================================================ -->
+  <section id="projects">
+    <div class="sec-header">
+      <span class="sec-num">03</span>
+      <h2 class="sec-title">Projetos</h2>
+      <div class="sec-line"></div>
+    </div>
+
+    <div class="repos-grid" id="repos-grid">
+      <div class="loading">
+        <div class="ld"></div><div class="ld"></div><div class="ld"></div>
+        <span>Carregando repositórios…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTATO
+  ============================================================ -->
+  <section id="contact">
+    <div class="sec-header" style="justify-content:center;">
+      <span class="sec-num">04</span>
+      <h2 class="sec-title">Contato</h2>
+    </div>
+
+    <p class="contact-title">Bora conversar? Pode me chamar! 🚀</p>
+
+    <!-- ✏️ Mude para seu e-mail -->
+    <a class="contact-email" href="mailto:luizhenriquedosantos1505@gmail.com">
+      luizhenriquedosantos1505@gmail.com
+    </a>
+
+    <div class="social-links">
+      <a class="social-link" href="https://github.com/frosfri" target="_blank">🐙 GitHub</a>
+      <a class="social-link" href="https://www.instagram.com/stt_luizz/" target="_blank">📸 Instagram</a>
+      <!-- ✏️ Quando criar LinkedIn, descomente:
+      <a class="social-link" href="https://linkedin.com/in/seu-perfil" target="_blank">💼 LinkedIn</a>
+      -->
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Feito com <span>❤️</span> por <span>Luiz Henrique</span> — dados via GitHub API &nbsp;|&nbsp; <span>@frosfri</span></p>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT — Toda a logica esta aqui, bem comentada!
+  ============================================================ -->
+  <script>
+    /* ============================================================
+       CONFIGURACAO PRINCIPAL
+       ✏️ So mexa aqui para mudar comportamentos globais
+    ============================================================ */
+    const CONFIG = {
+      username:    'frosfri',    // Seu username do GitHub
+      maxRepos:    9,            // Quantos projetos mostrar na grade
+      hiddenRepos: ['frosfri'],  // Repos para ocultar (ex: o repo de perfil)
+    };
+
+    /* ============================================================
+       CORES DAS LINGUAGENS — Adicione novas se precisar
+    ============================================================ */
+    const LANG_COLORS = {
+      JavaScript: '#f7df1e',
+      TypeScript: '#3178c6',
+      Python:     '#3572A5',
+      HTML:       '#e34c26',
+      CSS:        '#563d7c',
+      Java:       '#b07219',
+      PHP:        '#4F5D95',
+      'C++':      '#f34b7d',
+      C:          '#555555',
+      'C#':       '#178600',
+      Go:         '#00ADD8',
+      Rust:       '#dea584',
+      Shell:      '#89e051',
+      Vue:        '#41b883',
+    };
+
+    /* ============================================================
+       CURSOR PERSONALIZADO — Segue o mouse
+    ============================================================ */
+    const cur = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+      cur.style.left = (e.clientX - 7) + 'px';
+      cur.style.top  = (e.clientY - 7) + 'px';
+    });
+    document.addEventListener('mousedown', () => cur.style.transform = 'scale(2.5)');
+    document.addEventListener('mouseup',   () => cur.style.transform = 'scale(1)');
+
+    /* ============================================================
+       CARREGA REPOSITORIOS DA API DO GITHUB
+    ============================================================ */
+    async function loadRepos() {
+      try {
+        // Busca ate 100 repos, ordenados por estrelas
+        const res = await fetch(
+          `https://api.github.com/users/${CONFIG.username}/repos?per_page=100&sort=stars&direction=desc`
+        );
+        const repos = await res.json();
+
+        // Remove repos ocultos e forks (projetos copiados de outros)
+        // Para MOSTRAR forks tambem, remova o "!r.fork"
+        const filtrados = repos.filter(r =>
+          !CONFIG.hiddenRepos.includes(r.name) && !r.fork
+        );
+
+        // Calcula total de estrelas
+        const totalEstrelas = filtrados.reduce((soma, r) => soma + r.stargazers_count, 0);
+        document.getElementById('stat-stars').textContent = totalEstrelas;
+
+        // Atualiza stats com dados mais recentes da API
+        const userRes = await fetch(`https://api.github.com/users/${CONFIG.username}`);
+        const user = await userRes.json();
+        document.getElementById('stat-repos').textContent = user.public_repos;
+        document.getElementById('stat-followers').textContent = user.followers;
+
+        // Pega apenas os N primeiros repos
+        const paraExibir = filtrados.slice(0, CONFIG.maxRepos);
+
+        // Monta os cards HTML
+        const grid = document.getElementById('repos-grid');
+        grid.innerHTML = paraExibir.map(repo => {
+          const cor = LANG_COLORS[repo.language] || '#888888';
+
+          // Badge da linguagem (so aparece se o repo tiver uma)
+          const badgeLinguagem = repo.language
+            ? `<span class="repo-lang">
+                 <span class="lang-dot" style="background:${cor}"></span>
+                 ${repo.language}
+               </span>`
+            : '';
+
+          return `
+            <a class="repo-card" href="${repo.html_url}" target="_blank">
+              <div class="repo-header">
+                <span style="color:var(--accent)">📁</span>
+                <span class="repo-name">${repo.name}</span>
+              </div>
+              <p class="repo-desc">${repo.description || 'Sem descrição.'}</p>
+              <div class="repo-footer">
+                ${badgeLinguagem}
+                ${repo.stargazers_count ? `<span class="repo-stars">${repo.stargazers_count}</span>` : ''}
+                <span class="repo-arrow">↗</span>
+              </div>
+            </a>
+          `;
+        }).join('');
+
+        // Ativa animacao de entrada nos cards
+        ativarAnimacoes();
+
+      } catch (erro) {
+        // Mostra aviso amigavel se der erro
+        document.getElementById('repos-grid').innerHTML = `
+          <p style="color:var(--muted); font-family:var(--mono); font-size:0.85rem;">
+            ⚠️ Não foi possível carregar os repositórios. Verifique sua conexão.
+          </p>`;
+        console.error('Erro na API do GitHub:', erro);
+      }
+    }
+
+    /* ============================================================
+       ANIMACAO DE SCROLL — Elementos entram ao aparecer na tela
+    ============================================================ */
+    function ativarAnimacoes() {
+      // IntersectionObserver observa quando um elemento fica visivel
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity   = '1';
+            entry.target.style.transform = 'translateY(0)';
+            obs.unobserve(entry.target); // Para de observar depois de animar
+          }
+        });
+      }, { threshold: 0.1 });
+
+      // Aplica a animacao em cada elemento, com atraso escalonado
+      document.querySelectorAll(
+        '.repo-card, .skill-card, .stat-item, .tl-item'
+      ).forEach((el, i) => {
+        el.style.opacity    = '0';
+        el.style.transform  = 'translateY(24px)';
+        el.style.transition = `opacity 0.5s ${i * 0.06}s ease, transform 0.5s ${i * 0.06}s ease`;
+        obs.observe(el);
+      });
+    }
+
+    // Inicia o carregamento quando a pagina carregar
+    loadRepos();
+    // Anima elementos estaticos (skills, timeline) logo de inicio
+    setTimeout(ativarAnimacoes, 200);
+  </script>
+</body>
+</html>
